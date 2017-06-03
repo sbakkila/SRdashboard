@@ -6,6 +6,7 @@ var boot = require('loopback-boot');
 var app = module.exports = loopback();
 var fs = require('fs');
 var busboy = require('connect-busboy');
+var path = require('path');
 
 app.start = function() {
   // start the web server
@@ -27,31 +28,33 @@ boot(app, __dirname, function(err) {
 
   // start the server if `$ node server.js`
   if (require.main === module){
-     app.io = require('socket.io')(app.start());
+    app.start();
   }
 });
 
-var onlySocket;
-app.io && app.io.on('connection', function(socket) {
-  onlySocket = socket
-});
+// var onlySocket;
+// app.io && app.io.on('connection', function(socket) {
+//   console.log('callback fired')
+//   onlySocket = socket
+// });
 
 app.use(busboy());
 
 app.post('/fileupload', function(req, res) {
     var fstream;
     console.log('req busboy: ', req.busboy)
+    console.log('req body: ', req.body)
+
     if(req.busboy){
       req.pipe(req.busboy);
       req.busboy.on('file', function (fieldname, file, filename) {
           console.log("Uploading: " + filename);
-          fstream = fs.createWriteStream(__dirname + '../client/' + filename);
+          fstream = fs.createWriteStream(path.resolve('./client/'+ filename));
           file.pipe(fstream);
           fstream.on('close', function () {
-              res.redirect('back');
+            res.sendStatus(201)
           });
           console.log('file was actually created')
-          onlySocket.emit('sendPhoto', filename)
       });
     } else {
       console.log('lolol its broken')
