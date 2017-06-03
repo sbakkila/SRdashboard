@@ -4,6 +4,8 @@ var loopback = require('loopback');
 var boot = require('loopback-boot');
 
 var app = module.exports = loopback();
+var fs = require('fs');
+var busboy = require('connect-busboy');
 
 app.start = function() {
   // start the web server
@@ -24,11 +26,34 @@ boot(app, __dirname, function(err) {
   if (err) throw err;
 
   // start the server if `$ node server.js`
-  if (require.main === module)
-    app.start();
+  if (require.main === module){
+     app.io = require('socket.io')(app.start());
+  }
 });
 
-// I added this for the index html
-// app.get('*', function (req, res) {
-//   res.sendFile(path.join(__dirname, '../client/index.html'));
-// });
+var onlySocket;
+app.io && app.io.on('connection', function(socket) {
+  onlySocket = socket
+});
+
+app.use(busboy());
+
+app.post('/fileupload', function(req, res) {
+    var fstream;
+    console.log('req busboy: ', req.busboy)
+    if(req.busboy){
+      req.pipe(req.busboy);
+      req.busboy.on('file', function (fieldname, file, filename) {
+          console.log("Uploading: " + filename);
+          fstream = fs.createWriteStream(__dirname + '../client/' + filename);
+          file.pipe(fstream);
+          fstream.on('close', function () {
+              res.redirect('back');
+          });
+          console.log('file was actually created')
+          onlySocket.emit('sendPhoto', filename)
+      });
+    } else {
+      console.log('lolol its broken')
+    }
+});
