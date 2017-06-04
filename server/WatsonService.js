@@ -16,7 +16,7 @@ var visualRecognition = new VisualRecognitionV3({
   version_date: VisualRecognitionV3.VERSION_DATE_2016_05_20
 });
 
-function classifyImage(filePath) {
+function classifyImage(filePath, res, filenames, filename) {
   var params = {
     images_file: fs.createReadStream(filePath),
     classifier_ids: 'Emergency_1149889657',
@@ -24,12 +24,12 @@ function classifyImage(filePath) {
     threshold: 0.2,
   };
 
-  visualRecognition.classify(params, function(err, res) {
+  visualRecognition.classify(params, function(err, response) {
     if (err)
       console.log(err);
     else {
-      console.log('Classified photo', res);
-      let classifiers = res.images[0].classifiers
+      console.log('Classified photo', response);
+      let classifiers = response.images[0].classifiers
         .map(classifier => classifier.classes)[0]
         .map(cl => [cl.class, cl.score]);
 
@@ -39,9 +39,12 @@ function classifyImage(filePath) {
       console.log('Classifiers:', classifiers);
       if (classifiers[0][0] === 'Emergency') {
         console.log('FOUND EMERGENCY');
+        filenames.push(filename)
+        res.sendStatus(201)
         return getEmergencyImage(filePath, classifiers[0].score);
       } else {
         console.log("NOT EMERGENCY");
+        res.sendStatus(201)
         return false;
       }
     }
