@@ -1,4 +1,5 @@
 `use strict`;
+const path = require('path');
 
 var credentials = {
   'url': 'https://gateway-a.watsonplatform.net/visual-recognition/api',
@@ -15,16 +16,40 @@ var visualRecognition = new VisualRecognitionV3({
   version_date: VisualRecognitionV3.VERSION_DATE_2016_05_20
 });
 
-var params = {
-  images_file: fs.createReadStream('./resources/car.png'),
-  classifier_ids: 'AquaticEmergencies_15839687',
-  owners: 'me',
-  threshold: 0.4,
+function classifyImage(filePath) {
+  var params = {
+    images_file: fs.createReadStream(filePath),
+    classifier_ids: 'Emergency_1149889657',
+    owners: 'me',
+    threshold: 0.2,
+  };
+
+  visualRecognition.classify(params, function(err, res) {
+    if (err)
+      console.log(err);
+    else {
+      console.log('Classified photo', res);
+      let classifiers = res.images[0].classifiers
+        .map(classifier => classifier.classes)[0]
+        .map(cl => [cl.class, cl.score]);
+
+      let highestRating = classifiers.reduce((highestScore, classifier) => {
+        return classifier.score > highestScore;
+      });
+      console.log('Classifiers:', classifiers);
+      if (classifiers[0][0] === 'Emergency') {
+        console.log('FOUND EMERGENCY');
+        return getEmergencyImage(filePath, classifiers[0].score);
+      } else {
+        console.log("NOT EMERGENCY");
+        return false;
+      }
+    }
+  });
 };
 
-visualRecognition.classify(params, function(err, res) {
-  if (err)
-    console.log(err);
-  else
-    console.log(JSON.stringify(res, null, 2));
-});
+function getEmergencyImage(filePath, confidenceScore) {
+  return [filePath, confidenceScore];
+}
+
+module.exports = classifyImage;
