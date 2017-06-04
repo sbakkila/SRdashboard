@@ -8,6 +8,7 @@ var fs = require('fs');
 var busboy = require('connect-busboy');
 var path = require('path');
 const bodyParser = require('body-parser');
+const WatsonService = require('./WatsonService');
 
 app.start = function() {
   // start the web server
