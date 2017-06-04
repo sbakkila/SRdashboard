@@ -38,12 +38,10 @@ function classifyImage(filePath, res, filenames, filename) {
       });
       console.log('Classifiers:', classifiers);
       if (classifiers[0][0] === 'Emergency') {
-        console.log('FOUND EMERGENCY');
         filenames.push(filename)
         res.sendStatus(201)
         return getEmergencyImage(filePath, classifiers[0].score);
       } else {
-        console.log("NOT EMERGENCY");
         res.sendStatus(201)
         return false;
       }

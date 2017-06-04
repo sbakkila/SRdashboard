@@ -54,7 +54,6 @@ app.post('/fileupload', function(req, res) {
         fstream.on('close', function() {
           let result =
             watsonClassifyImage(filePath, res, filenames, filename)
-          console.log("RESULT", result);
         });
         var fileNameArray = filename.split('_');
         var droneID = filename.split('-')[1];
