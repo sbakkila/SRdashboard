@@ -31,11 +31,10 @@ function classifyImage(filePath, res, filenames, filename) {
       console.log('Classified photo', response);
       let classifiers = response.images[0].classifiers
         .map(classifier => classifier.classes)[0]
-        .map(cl => [cl.class, cl.score]);
+        if(classifiers) {
+          classifiers = classifiers.map(cl => [cl.class, cl.score]);
+        }
 
-      let highestRating = classifiers.reduce((highestScore, classifier) => {
-        return classifier.score > highestScore;
-      });
       console.log('Classifiers:', classifiers);
       if (classifiers[0][0] === 'Emergency') {
         console.log('FOUND EMERGENCY');
