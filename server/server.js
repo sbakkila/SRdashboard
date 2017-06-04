@@ -7,6 +7,7 @@ var app = module.exports = loopback();
 var fs = require('fs');
 var busboy = require('connect-busboy');
 var path = require('path');
+const bodyParser = require('body-parser');
 
 app.start = function() {
   // start the web server
@@ -32,6 +33,9 @@ boot(app, __dirname, function(err) {
   }
 });
 
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
 // var onlySocket;
 // app.io && app.io.on('connection', function(socket) {
 //   console.log('callback fired')
@@ -41,6 +45,7 @@ boot(app, __dirname, function(err) {
 app.use(busboy());
 
 var filenames = [];
+var dronePositions = [];
 
 app.post('/fileupload', function(req, res) {
     var fstream;
@@ -50,21 +55,42 @@ app.post('/fileupload', function(req, res) {
     if(req.busboy){
       req.pipe(req.busboy);
       req.busboy.on('file', function (fieldname, file, filename) {
-          console.log("Uploading: " + filename);
           fstream = fs.createWriteStream(path.resolve('./client/'+ filename));
           file.pipe(fstream);
           fstream.on('close', function () {
             filenames.push(filename)
             res.sendStatus(201)
           });
-          console.log('file was actually created')
+          var fileNameArray = filename.split('_');
+          var droneID = filename.split('-')[1];
+
+          var xPosition = fileNameArray[1];
+          var yPosition = fileNameArray[2];
+
+          var alreadyThere = false;
+          for(var i = 0; i < dronePositions.length; i++){
+            if(dronePositions[i][droneID]){
+              dronePositions[i][droneID] = [xPosition, yPosition]
+              alreadyThere = true;
+            }
+          }
+
+          if(!alreadyThere){
+            var newDrone = {}
+            newDrone[droneID] = [xPosition, yPosition]
+            dronePositions.push(newDrone)
+          }
+          console.log('dronePositions', dronePositions)
       });
     } else {
-      console.log('lolol its broken')
+      console.log('File could not be created!')
     }
 });
 
+app.get('/dronePositions', function(req, res){
+  res.send(dronePositions);
+})
+
 app.get('/photos', function(req, res){
-  console.log('these are the filenames: ', filenames)
   res.send(filenames);
 })
