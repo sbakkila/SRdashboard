@@ -85,6 +85,10 @@ app.post('/fileupload', function(req, res) {
     }
 });
 
+// app.post('/imageClick', function(req, res){
+//
+// })
+
 app.get('/dronePositions', function(req, res){
   res.send(dronePositions);
 })
