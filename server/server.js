@@ -52,12 +52,9 @@ app.post('/fileupload', function(req, res) {
         fstream = fs.createWriteStream(filePath);
         file.pipe(fstream);
         fstream.on('close', function() {
-          let newImage = watsonClassifyImage(filePath);
-          if (newImage) {
-            console.log("Found an emergency image", filename);
-            filenames.push(filename);
-          }
-          res.sendStatus(201)
+          let result =
+            watsonClassifyImage(filePath, res, filenames, filename)
+          console.log("RESULT", result);
         });
         var fileNameArray = filename.split('_');
         var droneID = filename.split('-')[1];
