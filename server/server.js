@@ -8,6 +8,7 @@ var fs = require('fs');
 var busboy = require('connect-busboy');
 var path = require('path');
 const bodyParser = require('body-parser');
+const watsonClassifyImage = require('./WatsonService');
 
 app.start = function() {
   // start the web server
@@ -36,12 +37,6 @@ boot(app, __dirname, function(err) {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// var onlySocket;
-// app.io && app.io.on('connection', function(socket) {
-//   console.log('callback fired')
-//   onlySocket = socket
-// });
-
 app.use(busboy());
 
 var filenames = [];
@@ -49,38 +44,41 @@ var dronePositions = [];
 
 app.post('/fileupload', function(req, res) {
     var fstream;
-    console.log('req busboy: ', req.busboy)
-    console.log('req body: ', req.body)
 
-    if(req.busboy){
+    if (req.busboy){
       req.pipe(req.busboy);
       req.busboy.on('file', function (fieldname, file, filename) {
-          fstream = fs.createWriteStream(path.resolve('./client/'+ filename));
-          file.pipe(fstream);
-          fstream.on('close', function () {
-            filenames.push(filename)
-            res.sendStatus(201)
-          });
-          var fileNameArray = filename.split('_');
-          var droneID = filename.split('-')[1];
-
-          var xPosition = fileNameArray[1];
-          var yPosition = fileNameArray[2];
-
-          var alreadyThere = false;
-          for(var i = 0; i < dronePositions.length; i++){
-            if(dronePositions[i][droneID]){
-              dronePositions[i][droneID] = [xPosition, yPosition]
-              alreadyThere = true;
-            }
+        var filePath = path.resolve('./client/' + filename);
+        fstream = fs.createWriteStream(filePath);
+        file.pipe(fstream);
+        fstream.on('close', function() {
+          let newImage = watsonClassifyImage(filePath);
+          if (newImage) {
+            console.log("Found an emergency image", filename);
+            filenames.push(filename);
           }
+          res.sendStatus(201)
+        });
+        var fileNameArray = filename.split('_');
+        var droneID = filename.split('-')[1];
 
-          if(!alreadyThere){
-            var newDrone = {}
-            newDrone[droneID] = [xPosition, yPosition]
-            dronePositions.push(newDrone)
+        var xPosition = fileNameArray[1];
+        var yPosition = fileNameArray[2];
+
+        var alreadyThere = false;
+        for (var i = 0; i < dronePositions.length; i++){
+          if (dronePositions[i][droneID]){
+            dronePositions[i][droneID] = [xPosition, yPosition]
+            alreadyThere = true;
           }
-          console.log('dronePositions', dronePositions)
+        }
+
+        if (!alreadyThere){
+          var newDrone = {}
+          newDrone[droneID] = [xPosition, yPosition]
+          dronePositions.push(newDrone)
+        }
+        console.log('dronePositions', dronePositions)
       });
     } else {
       console.log('File could not be created!')
