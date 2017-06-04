@@ -1,3 +1,4 @@
+import merge from 'lodash.merge';
 
 const PHOTO_SET = [
   {
@@ -36,12 +37,19 @@ const PHOTO_SET = [
   }
 ];
 
-export const reducer = (state=PHOTO_SET, action) => {
+export const reducer = (state=[], action) => {
+  var newState = [];
+  state.forEach(obj=>{newState.push(merge({}, obj))})
+
   switch(action.type){
     case "RECEIVE_PHOTO":
-      state.push(action.photo);
-      return state;
+      newState.push(action.photo);
+      return newState;
+    case "DROP_ALL_PHOTOS":
+      console.log('burn everything');
+      newState = [];
+      return newState;
     default:
-      return state;
+      return newState;
   }
 }

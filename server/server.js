@@ -40,6 +40,8 @@ boot(app, __dirname, function(err) {
 
 app.use(busboy());
 
+var filenames = [];
+
 app.post('/fileupload', function(req, res) {
     var fstream;
     console.log('req busboy: ', req.busboy)
@@ -52,6 +54,7 @@ app.post('/fileupload', function(req, res) {
           fstream = fs.createWriteStream(path.resolve('./client/'+ filename));
           file.pipe(fstream);
           fstream.on('close', function () {
+            filenames.push(filename)
             res.sendStatus(201)
           });
           console.log('file was actually created')
@@ -60,3 +63,8 @@ app.post('/fileupload', function(req, res) {
       console.log('lolol its broken')
     }
 });
+
+app.get('/photos', function(req, res){
+  console.log('these are the filenames: ', filenames)
+  res.send(filenames);
+})

@@ -9,6 +9,8 @@ import PhotosContainer from './photosContainer';
 
 import store from './store.js';
 
+import { loop } from './updateLoop.js'
+
 ReactDOM.render(
   <Provider store={store}>
     <PhotosContainer />

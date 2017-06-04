@@ -1,14 +1,18 @@
 import axios from 'axios';
-import receivePhoto from './actionCreators'
+import { receivePhoto, dropAllPhotos } from './actionCreators'
 import store from './store'
 
-setInterval(()=>{
+export const loop = setInterval(()=>{
+  console.log('set interval is firing')
   axios.get('/photos')
-  .then( (photos) => {
-    // if
-    // photos.forEach( (photo)=>{
-    //   receivePhoto(photo)
-    // })
+  .then( (photoNames) => {
+    store.dispatch(dropAllPhotos())
+    // console.log('photoNames: ', photoNames)
+    photoNames.data.forEach( (photoName)=>{
+      store.dispatch(receivePhoto(photoName))
+    })
   })
-  .catch(err)
-}, 3000)
+  .catch(function (error) {
+    console.log(error);
+  })
+}, 5000)
